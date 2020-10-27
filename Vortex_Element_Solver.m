@@ -106,6 +106,8 @@ end
 
 function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
 
+    n = length(panels(1,:)) - 1;
+
     figure(1)
     plot(panels(1,:),panels(2,:),'color','k');
     hold on
@@ -115,9 +117,12 @@ function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
     hold off
     xlim([0.0,1.0])
     ylim([-0.04,0.04])
-    title("Vortex Element Solver Airfoil")
+    title_str = strcat("Vortex Element Solver Airfoil n=", num2str(n));
+    title(title_str)
     xlabel('x/c')
     ylabel('y/c')
+    save_str = strcat("Panels n=", num2str(n), ".png");
+    exportgraphics(gcf,save_str,'Resolution',500)
     
     figure(2)
     colororder({'r','b'})
@@ -137,7 +142,12 @@ function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
     ax = gca;
     ax.XTick = alpha;
     ax.GridColor = [0.1,0.1,0.1];
-    title("Aerodynamic Characteristics")
+    title_str = strcat("Aerodynamic Characteristics n=", num2str(n));
+    title(title_str)
     xlabel('alpha [deg]')
+    save_str = strcat("Aerodynamic Characteristics n=", num2str(n), ".png");
+    exportgraphics(gcf,save_str,'Resolution',500)
+    
+    close()
     
 end
