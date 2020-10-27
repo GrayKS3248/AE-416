@@ -4,9 +4,9 @@ function Vortex_Element_Solver(num_panels)
     control_points = get_control_points(panels);
     circulation_points = get_circulation_points(panels);
     
+    A = get_A(panels, control_points, circulation_points);
+    
     visualize(panels, control_points, circulation_points)
-    
-    
     
 end
 
@@ -39,6 +39,35 @@ function circulation_points = get_circulation_points(panels)
     y = panels(2,:) + 0.25 * delta_y;
     circulation_points = [x(1:end-1);y(1:end-1)];
     
+end
+
+function A = get_A(panels,control_points,circulation_points)
+    
+    A = zeros(length(control_points(1,:)), length(circulation_points(1,:)));
+
+    for curr_point = 1:length(control_points(1,:))
+                    
+        panel_normal_dirn = panels(:,curr_point+1) - panels(:,curr_point);
+        panel_normal_dirn = [panel_normal_dirn(2); -panel_normal_dirn(1)];
+        panel_normal_dirn = panel_normal_dirn / norm(panel_normal_dirn);
+        
+        curr_control_point = control_points(:,curr_point);
+            
+        for curr_vortex = 1:length(circulation_points(1,:))
+            
+            r_pq = curr_control_point - circulation_points(:,curr_vortex);
+            r_pq_norm = norm(r_pq);
+           
+            induced_v_dirn = [r_pq(2); -r_pq(1)];
+            induced_v_dirn = induced_v_dirn / norm(induced_v_dirn);
+            
+            cos_delta_pq = dot(induced_v_dirn, panel_normal_dirn);
+            
+            A(curr_point, curr_vortex) = cos_delta_pq / (2 * pi * r_pq_norm);
+            
+        end
+    end
+
 end
 
 function visualize(panels, control_points, circulation_points)
