@@ -1,10 +1,11 @@
-function Vortex_Element_Solver(num_panels)
+function Vortex_Element_Solver(num_panels, alpha)
 
     panels = get_panels(15.957,0.2025,num_panels);
     control_points = get_control_points(panels);
     circulation_points = get_circulation_points(panels);
     
-    A = get_A(panels, control_points, circulation_points);
+    [A, panel_normal] = get_A(panels, control_points, circulation_points);
+    B = get_B(panel_normal, alpha);
     
     visualize(panels, control_points, circulation_points)
     
@@ -41,15 +42,17 @@ function circulation_points = get_circulation_points(panels)
     
 end
 
-function A = get_A(panels,control_points,circulation_points)
+function [A, panel_normal] = get_A(panels,control_points,circulation_points)
     
     A = zeros(length(control_points(1,:)), length(circulation_points(1,:)));
-
+    panel_normal = zeros(2,length(control_points(1,:)));
+    
     for curr_point = 1:length(control_points(1,:))
                     
         panel_normal_dirn = panels(:,curr_point+1) - panels(:,curr_point);
         panel_normal_dirn = [panel_normal_dirn(2); -panel_normal_dirn(1)];
         panel_normal_dirn = panel_normal_dirn / norm(panel_normal_dirn);
+        panel_normal(:,curr_point) = panel_normal_dirn;
         
         curr_control_point = control_points(:,curr_point);
             
@@ -66,6 +69,28 @@ function A = get_A(panels,control_points,circulation_points)
             A(curr_point, curr_vortex) = cos_delta_pq / (2 * pi * r_pq_norm);
             
         end
+    end
+
+end
+
+function B = get_B(panel_normal, alpha)
+
+    B = zeros(length(panel_normal(1,:)), length(alpha(1,:)));
+    alpha_rad = deg2rad(alpha);
+    
+    for curr_alpha = 1:length(alpha(1,:))
+        
+        cos_curr_alpha = cos(alpha_rad(curr_alpha));
+        sin_curr_alpha = sin(alpha_rad(curr_alpha));
+        V_inf_dirn = [cos_curr_alpha -sin_curr_alpha; sin_curr_alpha cos_curr_alpha] * [1;0];
+        
+        for curr_point = 1:length(panel_normal(1,:))
+        
+            V_inf_norm = dot(-1.0 * panel_normal(:,curr_point), V_inf_dirn);
+            B(curr_point, curr_alpha) = V_inf_norm;
+            
+        end
+        
     end
 
 end
