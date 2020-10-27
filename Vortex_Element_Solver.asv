@@ -7,6 +7,14 @@ function Vortex_Element_Solver(num_panels, alpha)
     [A, panel_normal] = get_A(panels, control_points, circulation_points);
     B = get_B(panel_normal, alpha);
     
+    gamma = zeros(length(circulation_points(1,:)), length(alpha(1,:)));
+    for curr_alpha = 1:length(alpha(1,:))
+        gamma(:,curr_alpha) = A\B(:,curr_alpha);
+    end
+    
+    cl = 2.0 * sum(gamma);
+    
+    
     visualize(panels, control_points, circulation_points)
     
 end
@@ -84,7 +92,12 @@ function B = get_B(panel_normal, alpha)
         sin_curr_alpha = sin(alpha_rad(curr_alpha));
         V_inf_dirn = [cos_curr_alpha -sin_curr_alpha; sin_curr_alpha cos_curr_alpha] * [1;0];
         
+        for curr_point = 1:length(panel_normal(1,:))
         
+            V_inf_norm = dot(-1.0 * panel_normal(:,curr_point), V_inf_dirn);
+            B(curr_point, curr_alpha) = V_inf_norm;
+            
+        end
         
     end
 

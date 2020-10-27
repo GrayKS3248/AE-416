@@ -1,4 +1,4 @@
-function Vortex_Element_Solver(num_panels, alpha)
+function [gamma, cl, cm4c] = Vortex_Element_Solver(num_panels, alpha)
 
     panels = get_panels(15.957,0.2025,num_panels);
     control_points = get_control_points(panels);
@@ -7,7 +7,16 @@ function Vortex_Element_Solver(num_panels, alpha)
     [A, panel_normal] = get_A(panels, control_points, circulation_points);
     B = get_B(panel_normal, alpha);
     
-    visualize(panels, control_points, circulation_points)
+    gamma = zeros(length(circulation_points(1,:)), length(alpha(1,:)));
+    for curr_alpha = 1:length(alpha(1,:))
+        gamma(:,curr_alpha) = A\B(:,curr_alpha);
+    end
+    
+    cl = 2.0 * sum(gamma);
+    cmle = -2.0 * cos(deg2rad(alpha)) .* sum(gamma .* vecnorm(circulation_points,1)');
+    cm4c = 0.25 * cl + cmle;
+    
+    visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
     
 end
 
@@ -95,8 +104,9 @@ function B = get_B(panel_normal, alpha)
 
 end
 
-function visualize(panels, control_points, circulation_points)
+function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
 
+    figure(1)
     plot(panels(1,:),panels(2,:),'color','k');
     hold on
     scatter(panels(1,:),panels(2,:),'filled','o','k')
@@ -108,5 +118,26 @@ function visualize(panels, control_points, circulation_points)
     title("Vortex Element Solver Airfoil")
     xlabel('x/c')
     ylabel('y/c')
+    
+    figure(2)
+    colororder({'r','b'})
+    yyaxis left
+    grid on
+    plot(alpha,cl,'color','r')
+    ylabel('Cl')
+    ylim([-1.5,1.5])
+    yyaxis right
+    plot(alpha,cm4c,'color','b')
+    hold on
+    line([0 0], [-0.025,0.025],'color','k')
+    line([alpha(1),alpha(end)], [0 0],'color','k')
+    hold off
+    ylabel('Cm4c')
+    ylim([-0.025,0.025])
+    ax = gca;
+    ax.XTick = alpha;
+    ax.GridColor = [0.1,0.1,0.1];
+    title("Aerodynamic Characteristics")
+    xlabel('alpha [deg]')
     
 end
