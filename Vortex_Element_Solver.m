@@ -1,8 +1,11 @@
-function [gamma, cl, cm4c] = Vortex_Element_Solver(num_panels, alpha)
+function [gamma_distribution, cl, cm4c] = Vortex_Element_Solver(num_panels, alpha)
 
     panels = get_panels(15.957,0.2025,num_panels);
     control_points = get_control_points(panels);
     circulation_points = get_circulation_points(panels);
+    
+    panel_lengths = vecnorm([circshift(panels(1,:),-1); circshift(panels(2,:),-1)] - panels,1);
+    panel_lengths = panel_lengths(1:end-1);
     
     [A, panel_normal] = get_A(panels, control_points, circulation_points);
     B = get_B(panel_normal, alpha);
@@ -16,7 +19,9 @@ function [gamma, cl, cm4c] = Vortex_Element_Solver(num_panels, alpha)
     cmle = -2.0 * cos(deg2rad(alpha)) .* sum(gamma .* vecnorm(circulation_points,1)');
     cm4c = 0.25 * cl + cmle;
     
-    visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
+    gamma_distribution = gamma ./ panel_lengths';
+    
+    visualize(panels, control_points, circulation_points, cl, cm4c, alpha, gamma_distribution)
     
 end
 
@@ -104,7 +109,7 @@ function B = get_B(panel_normal, alpha)
 
 end
 
-function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
+function visualize(panels, control_points, circulation_points, cl, cm4c, alpha, gamma_distribution)
 
     n = length(panels(1,:)) - 1;
 
@@ -121,6 +126,7 @@ function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
     title(title_str)
     xlabel('x/c')
     ylabel('y/c')
+    legend('panel', 'panel vertex', 'control point', 'vortex')
     save_str = strcat("Panels n=", num2str(n), ".png");
     exportgraphics(gcf,save_str,'Resolution',500)
     
@@ -149,5 +155,21 @@ function visualize(panels, control_points, circulation_points, cl, cm4c, alpha)
     exportgraphics(gcf,save_str,'Resolution',500)
     
     close()
+    stairs(panels(1,1:end-1), gamma_distribution(:,1)')
+    hold on
+    for curr_alpha = 6:5:length(alpha(1,:))
+        stairs(panels(1,1:end-1), gamma_distribution(:,curr_alpha)')
+    end
+    hold off
+    xlim([0,1])
+    ylim([-3.0,3.0])
+    xlabel('x/c')
+    ylabel('Circulation')
+    title_str = strcat("Circulation Distribution n=", num2str(n));
+    title(title_str)
+    grid on
+    legend('alpha = -10', 'alpha = -5', 'alpha = 0', 'alpha = 5', 'alpha = 10')
+    save_str = strcat("Circulation Distribution n=", num2str(n), ".png");
+    exportgraphics(gcf,save_str,'Resolution',500)
     
 end
